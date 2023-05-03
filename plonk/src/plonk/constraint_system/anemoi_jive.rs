@@ -621,28 +621,28 @@ mod test {
         cs.verify_witness(&witness, &[]).unwrap();
     }
 
+    use crate::plonk::constraint_system::ConstraintSystem;
     #[test]
     fn test_anemoi_variable_length_hash_constraint_system() {
-        let trace = AnemoiJive381::eval_variable_length_hash_with_trace(&[
-            BLSScalar::from(1u64),
-            BLSScalar::from(2u64),
-            BLSScalar::from(3u64),
-            BLSScalar::from(4u64),
-        ]);
+        let eight_ary = (0..8)
+            .map(|i| BLSScalar::from(i as u32))
+            .collect::<Vec<_>>();
+        let trace = AnemoiJive381::eval_variable_length_hash_with_trace(&eight_ary);
 
         let mut cs = TurboCS::new();
         cs.load_anemoi_jive_parameters::<AnemoiJive381>();
 
-        let one = cs.new_variable(BLSScalar::from(1u64));
-        let two = cs.new_variable(BLSScalar::from(2u64));
-        let three = cs.new_variable(BLSScalar::from(3u64));
-        let four = cs.new_variable(BLSScalar::from(4u64));
+        let eight_ary_vars = eight_ary
+            .iter()
+            .map(|x| cs.new_variable(*x))
+            .collect::<Vec<_>>();
 
         let output_var = cs.new_variable(trace.output);
 
-        let _ = cs.anemoi_variable_length_hash(&trace, &[one, two, three, four], output_var);
+        let _ = cs.anemoi_variable_length_hash(&trace, &eight_ary_vars, output_var);
 
         let witness = cs.get_and_clear_witness();
+        println!("Constraints: {}", cs.size());
         cs.verify_witness(&witness, &[]).unwrap();
     }
 
